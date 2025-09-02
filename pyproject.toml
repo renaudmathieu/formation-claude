@@ -1,0 +1,27 @@
+[project]
+name = "salle42"
+version = "0.3.0"
+description = "Réservation de salles de réunion"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "typer>=0.12",
+    "uvicorn>=0.30",
+    "tzdata; sys_platform == 'win32'",
+]
+
+[project.scripts]
+salle42 = "salle42.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
