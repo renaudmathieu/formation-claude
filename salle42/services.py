@@ -94,7 +94,8 @@ def jour_fr(dt):
 
 
 def overlaps(a_start, a_end, b_start, b_end):
-    return a_start <= b_end and b_start <= a_end
+    # chevauchement strict : des créneaux qui se touchent ne sont pas en conflit
+    return a_start < b_end and b_start < a_end
 
 
 def find_conflicts(room_id, start, end):
