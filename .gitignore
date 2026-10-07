@@ -1,2 +1,12 @@
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# base locale : jamais commitée
+salle42.db
+
+# fichiers personnels de Claude Code
+CLAUDE.local.md
+.claude/settings.local.json
