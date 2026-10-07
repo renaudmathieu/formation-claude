@@ -101,6 +101,9 @@ def overlaps(a_start, a_end, b_start, b_end):
 def find_conflicts(room_id, start, end):
     conflicts = []
     for b in storage.get_bookings(room_id):
+        # une réservation annulée libère son créneau
+        if b.status == "cancelled":
+            continue
         if overlaps(start, end, b.start, b.end):
             conflicts.append(b)
     return conflicts

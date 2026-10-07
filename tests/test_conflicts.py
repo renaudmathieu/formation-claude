@@ -37,3 +37,17 @@ def test_overlapping_booking_is_refused():
     services.book("B", "2026-09-14", "10:00", "11:00", "renaud")
     with pytest.raises(services.ConflictError):
         services.book("B", "2026-09-14", "10:30", "11:30", "nico")
+
+
+def test_cancelled_booking_frees_the_slot():
+    # B3 : après une annulation, le même créneau doit pouvoir être réservé
+    booking = services.book("A", "2026-09-15", "10:00", "11:00", "lea")
+    services.cancel(booking.id)
+    services.book("A", "2026-09-15", "10:00", "11:00", "max")
+    assert [b.owner for b in services.list_bookings("A")] == ["max"]
+
+
+def test_cancel_twice_is_not_an_error():
+    booking = services.book("A", "2026-09-15", "10:00", "11:00", "lea")
+    services.cancel(booking.id)
+    assert services.cancel(booking.id).status == "cancelled"
