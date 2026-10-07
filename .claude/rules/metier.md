@@ -19,6 +19,12 @@ Ces règles viennent de la spécification, pas du code. Si le code les contredit
 - La fin est strictement après le début, et une réservation dure au plus 12 heures.
 - Les heures saisies sont en heure de Paris ; le stockage est en UTC.
 
+## Récurrence (F1)
+- `book ... --weekly N` crée N réservations, même créneau, une par semaine à partir de la date donnée.
+- Tout ou rien : si un seul créneau est en conflit, aucune réservation n'est créée et l'erreur indique la première date en conflit.
+- Les semaines s'ajoutent en heure de Paris : une réunion de 10:00 reste à 10:00 après un changement d'heure.
+- Hors périmètre : récurrence quotidienne ou mensuelle, exceptions, API (CLI seulement).
+
 ## Annulation
 - Annuler passe le statut à `cancelled` ; on ne supprime jamais une ligne de `bookings`.
 - Annuler deux fois la même réservation n'est pas une erreur.

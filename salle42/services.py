@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 from salle42 import storage
 from salle42.models import Booking, Room
+from salle42.rules.recurrence import weekly_slots
 
 TZ = ZoneInfo("Europe/Paris")
 UTC = ZoneInfo("UTC")
@@ -47,7 +48,8 @@ class CapacityError(BookingError):
 class ConflictError(BookingError):
     def __init__(self, other):
         super().__init__(
-            f"Conflit avec #{other.id} ({hhmm(other.start)}–{hhmm(other.end)}, {other.owner})"
+            f"Conflit avec #{other.id} "
+            f"({jour_fr(other.start)} {hhmm(other.start)}–{hhmm(other.end)}, {other.owner})"
         )
         self.other = other
 
@@ -151,6 +153,52 @@ def book(room_id, day, start, end, owner, attendees=None):
     return booking
 
 
+def book_weekly(room_id, day, start, end, owner, weeks, attendees=None):
+    """Crée une réservation par semaine pendant `weeks` semaines, tout ou rien (F1).
+
+    Args:
+        room_id: Code de la salle (A, B, C).
+        day: Date de la première occurrence, AAAA-MM-JJ.
+        start: Heure de début, HH:MM, heure de Paris.
+        end: Heure de fin, HH:MM, heure de Paris.
+        owner: Qui réserve.
+        weeks: Nombre d'occurrences, au moins 1.
+        attendees: Nombre de personnes, optionnel.
+
+    Returns:
+        Les réservations créées, dans l'ordre chronologique.
+
+    Raises:
+        InvalidSlot: Si `weeks` est inférieur à 1 ou si le créneau est invalide.
+        CapacityError: Si `attendees` dépasse la capacité de la salle.
+        ConflictError: Au premier créneau en conflit ; aucune réservation n'est alors créée.
+    """
+    if weeks < 1:
+        raise InvalidSlot("--weekly attend un nombre de semaines au moins égal à 1")
+    room = get_room_or_fail(room_id)
+    start_utc = to_utc(day, start)
+    end_utc = to_utc(day, end)
+    check_slot(start_utc, end_utc)
+    check_capacity(attendees, room)
+    bookings = []
+    for slot_start, slot_end in weekly_slots(start_utc, end_utc, weeks):
+        conflicts = find_conflicts(room.id, slot_start, slot_end)
+        if conflicts:
+            raise ConflictError(conflicts[0])
+        bookings.append(
+            Booking(
+                id=uuid.uuid4().hex[:4],
+                room_id=room.id,
+                start=slot_start,
+                end=slot_end,
+                owner=owner,
+                attendees=attendees,
+            )
+        )
+    storage.insert_bookings(bookings)
+    return bookings
+
+
 def book_from_dict(payload):
     # utilisé par l'API
     if not payload.get("owner"):
@@ -224,6 +272,13 @@ def format_booking(b: Booking):
     if b.status == "cancelled":
         line += " [annulée]"
     return line
+
+
+def format_series(bookings):
+    """Résumé d'une série hebdomadaire : « 4 réservations créées (14/09 → 05/10) »."""
+    first, last = bookings[0], bookings[-1]
+    period = f"{to_local(first.start):%d/%m} → {to_local(last.start):%d/%m}"
+    return f"{len(bookings)} réservations créées ({period})"
 
 
 def format_booking_short(b: Booking):

@@ -24,14 +24,23 @@ def book(
     attendees: Annotated[
         int | None, typer.Option("--attendees", help="Nombre de personnes")
     ] = None,
+    weekly: Annotated[
+        int | None, typer.Option("--weekly", help="Répéter chaque semaine, N occurrences")
+    ] = None,
 ):
     """Réserve une salle : salle42 book B 2026-09-14 10:00 11:00 --by renaud"""
     try:
-        booking = services.book(room, day, start, end, by, attendees)
+        if weekly is None:
+            booking = services.book(room, day, start, end, by, attendees)
+        else:
+            series = services.book_weekly(room, day, start, end, by, weekly, attendees)
     except services.BookingError as e:
         typer.echo(f"✗ {e}", err=True)
         raise typer.Exit(1)
-    typer.echo("✓ " + services.format_booking(booking))
+    if weekly is None:
+        typer.echo("✓ " + services.format_booking(booking))
+    else:
+        typer.echo("✓ " + services.format_series(series))
 
 
 @app.command()

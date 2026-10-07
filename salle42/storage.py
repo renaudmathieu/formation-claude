@@ -118,6 +118,30 @@ def insert_booking(b):
         conn.close()
 
 
+def insert_bookings(bookings):
+    """Insère plusieurs réservations dans une seule transaction : toutes ou aucune."""
+    conn = get_conn()
+    try:
+        with conn:
+            conn.executemany(
+                "INSERT INTO bookings VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [
+                    (
+                        b.id,
+                        b.room_id,
+                        b.start.isoformat(),
+                        b.end.isoformat(),
+                        b.owner,
+                        b.attendees,
+                        b.status,
+                    )
+                    for b in bookings
+                ],
+            )
+    finally:
+        conn.close()
+
+
 def set_status(booking_id, status):
     conn = get_conn()
     try:
