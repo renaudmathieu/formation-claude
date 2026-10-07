@@ -12,7 +12,11 @@ def test_rooms():
     assert [r.id for r in services.list_rooms()] == ["A", "B", "C"]
 
 
-@pytest.mark.skip(reason="TODO: comprendre pourquoi ça casse")
 def test_book_without_attendees():
     booking = services.book("B", "2026-09-14", "10:00", "11:00", owner="moi")
     assert booking.attendees is None
+
+
+def test_book_over_capacity_is_refused():
+    with pytest.raises(services.CapacityError):
+        services.book("B", "2026-09-14", "10:00", "11:00", owner="moi", attendees=5)

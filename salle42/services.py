@@ -104,7 +104,8 @@ def find_conflicts(room_id, start, end):
 
 
 def check_capacity(attendees, room):
-    if attendees > room.capacity:
+    # attendees est optionnel : sans effectif annoncé, rien à vérifier
+    if attendees is not None and attendees > room.capacity:
         raise CapacityError(attendees, room)
 
 
