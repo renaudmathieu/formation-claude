@@ -3,6 +3,7 @@
 ## Commandes
 - Installer : `uv sync` · Tests : `uv run pytest -q` · Lint : `uv run ruff check . && uv run ruff format .`
 - API : `uv run uvicorn salle42.api:app --reload` · CLI : `uv run salle42 --help`
+- Mod du harnais (module 11) : `claude --plugin-dir ./outils/mod-harnais`, puis `/harnais`. `outils/` ne contient pas de code de l'application.
 
 ## Architecture
 - `models.py` (dataclasses) → `storage.py` (SQLite, seul accès à la base) → `rules/` (règles métier, fonctions pures) → `services.py` (orchestration) → `api.py` / `cli.py` (présentation).

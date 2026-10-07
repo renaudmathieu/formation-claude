@@ -1,0 +1,7 @@
+{
+  "name": "harnais",
+  "version": "0.1.0",
+  "description": "Tableau de bord du harnais de Salle42 : dernier résultat de pytest, soupape rouge-attendu et commande /harnais",
+  "author": { "name": "Formation Maîtriser Claude Code" },
+  "types": "./types/index.d.ts"
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Le module de hooks du mod harnais",
+  "modules": ["./register.tsx"]
+}
