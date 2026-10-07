@@ -10,3 +10,6 @@ salle42.db
 # fichiers personnels de Claude Code
 CLAUDE.local.md
 .claude/settings.local.json
+
+# soupape du hook Stop (module 10) : locale, jamais commitée
+.claude/rouge-attendu
