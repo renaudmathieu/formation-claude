@@ -1,3 +1,5 @@
+"""Orchestration des réservations : relie le stockage, les règles et la présentation."""
+
 import uuid
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
@@ -59,7 +61,12 @@ def parse_hour(hour):
         raise InvalidSlot(f"Heure invalide : {hour} (attendu : HH:MM)")
 
 
-def to_utc(day, hour):
+def to_utc(day: str, hour: str) -> datetime:
+    """Convertit une date et une heure saisies en heure de Paris vers un instant UTC.
+
+    Raises:
+        InvalidSlot: Si la date ou l'heure est mal formée.
+    """
     local = datetime.combine(parse_day(day), parse_hour(hour), tzinfo=TZ)
     return local.astimezone(UTC)
 
@@ -80,7 +87,8 @@ def jour_fr(dt):
 # ---------------------------------------------------------------- règles
 
 
-def find_conflicts(room_id, start, end):
+def find_conflicts(room_id: str, start: datetime, end: datetime) -> list[Booking]:
+    """Renvoie les réservations actives de la salle qui chevauchent le créneau (UTC)."""
     return conflicts.find_conflicts(start, end, storage.get_bookings(room_id))
 
 
@@ -95,18 +103,45 @@ def conflict_error(other):
 # ---------------------------------------------------------------- réservations
 
 
-def list_rooms():
+def list_rooms() -> list[Room]:
+    """Renvoie toutes les salles, triées par code."""
     return storage.get_rooms()
 
 
-def get_room_or_fail(room_id):
+def get_room_or_fail(room_id: str) -> Room:
+    """Renvoie la salle demandée, sans tenir compte de la casse du code.
+
+    Raises:
+        RoomNotFound: Si aucune salle ne porte ce code.
+    """
     room = storage.get_room(room_id.upper())
     if room is None:
         raise RoomNotFound(room_id)
     return room
 
 
-def book(room_id, day, start, end, owner, attendees=None):
+def book(
+    room_id: str, day: str, start: str, end: str, owner: str, attendees: int | None = None
+) -> Booking:
+    """Réserve une salle pour un créneau.
+
+    Args:
+        room_id: Code de la salle (A, B, C).
+        day: Date, AAAA-MM-JJ.
+        start: Heure de début, HH:MM, heure de Paris.
+        end: Heure de fin, HH:MM, heure de Paris.
+        owner: Qui réserve.
+        attendees: Nombre de personnes, optionnel ; absent, la capacité n'est pas vérifiée.
+
+    Returns:
+        La réservation créée, dates en UTC.
+
+    Raises:
+        RoomNotFound: Si la salle n'existe pas.
+        InvalidSlot: Si le créneau est invalide.
+        CapacityError: Si `attendees` dépasse la capacité de la salle.
+        ConflictError: Si une réservation active chevauche strictement le créneau.
+    """
     room = get_room_or_fail(room_id)
     start_utc = to_utc(day, start)
     end_utc = to_utc(day, end)
@@ -127,7 +162,15 @@ def book(room_id, day, start, end, owner, attendees=None):
     return booking
 
 
-def book_weekly(room_id, day, start, end, owner, weeks, attendees=None):
+def book_weekly(
+    room_id: str,
+    day: str,
+    start: str,
+    end: str,
+    owner: str,
+    weeks: int,
+    attendees: int | None = None,
+) -> list[Booking]:
     """Crée une réservation par semaine pendant `weeks` semaines, tout ou rien (F1).
 
     Args:
@@ -187,7 +230,17 @@ def book_from_dict(payload):
     )
 
 
-def cancel(booking_id):
+def cancel(booking_id: str) -> Booking:
+    """Annule une réservation ; son créneau redevient libre.
+
+    Annuler deux fois la même réservation n'est pas une erreur.
+
+    Args:
+        booking_id: Identifiant de la réservation, avec ou sans `#`.
+
+    Raises:
+        BookingNotFound: Si l'identifiant est inconnu.
+    """
     booking = storage.get_booking(booking_id.lstrip("#"))
     if booking is None:
         raise BookingNotFound(booking_id)
@@ -198,7 +251,8 @@ def cancel(booking_id):
     return booking
 
 
-def list_bookings(room_id=None, day=None):
+def list_bookings(room_id: str | None = None, day: str | None = None) -> list[Booking]:
+    """Renvoie les réservations actives, filtrées par salle et par jour (heure de Paris)."""
     bookings = storage.get_bookings(room_id.upper() if room_id else None)
     if day:
         d = date.fromisoformat(day)
