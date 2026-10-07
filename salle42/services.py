@@ -3,8 +3,33 @@ from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from salle42 import storage
+from salle42.errors import (
+    BookingError,
+    BookingNotFound,
+    CapacityError,
+    ConflictError,
+    InvalidSlot,
+    RoomNotFound,
+)
 from salle42.models import Booking, Room
+from salle42.rules import conflicts
+from salle42.rules.capacity import check_capacity
+from salle42.rules.conflicts import overlaps
 from salle42.rules.recurrence import weekly_slots
+from salle42.rules.slots import check_slot
+
+# Réexportés pour la CLI, l'API et les tests : `services.ConflictError`, etc.
+__all__ = [
+    "BookingError",
+    "BookingNotFound",
+    "CapacityError",
+    "ConflictError",
+    "InvalidSlot",
+    "RoomNotFound",
+    "check_capacity",
+    "check_slot",
+    "overlaps",
+]
 
 TZ = ZoneInfo("Europe/Paris")
 UTC = ZoneInfo("UTC")
@@ -14,44 +39,6 @@ JOURS = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
 # horaires d'ouverture du bâtiment (utilisés par free_slots)
 OUVERTURE = time(8, 0)
 FERMETURE = time(20, 0)
-
-
-class BookingError(Exception):
-    pass
-
-
-class RoomNotFound(BookingError):
-    def __init__(self, room_id):
-        super().__init__(f"Salle inconnue : {room_id}")
-        self.room_id = room_id
-
-
-class BookingNotFound(BookingError):
-    def __init__(self, booking_id):
-        super().__init__(f"Réservation inconnue : #{booking_id}")
-        self.booking_id = booking_id
-
-
-class InvalidSlot(BookingError):
-    pass
-
-
-class CapacityError(BookingError):
-    def __init__(self, attendees, room):
-        super().__init__(
-            f"{attendees} personnes pour {room.name} : capacité de {room.capacity} dépassée"
-        )
-        self.attendees = attendees
-        self.room = room
-
-
-class ConflictError(BookingError):
-    def __init__(self, other):
-        super().__init__(
-            f"Conflit avec #{other.id} "
-            f"({jour_fr(other.start)} {hhmm(other.start)}–{hhmm(other.end)}, {other.owner})"
-        )
-        self.other = other
 
 
 # ---------------------------------------------------------------- dates
@@ -93,33 +80,16 @@ def jour_fr(dt):
 # ---------------------------------------------------------------- règles
 
 
-def overlaps(a_start, a_end, b_start, b_end):
-    # chevauchement strict : des créneaux qui se touchent ne sont pas en conflit
-    return a_start < b_end and b_start < a_end
-
-
 def find_conflicts(room_id, start, end):
-    conflicts = []
-    for b in storage.get_bookings(room_id):
-        # une réservation annulée libère son créneau
-        if b.status == "cancelled":
-            continue
-        if overlaps(start, end, b.start, b.end):
-            conflicts.append(b)
-    return conflicts
+    return conflicts.find_conflicts(start, end, storage.get_bookings(room_id))
 
 
-def check_capacity(attendees, room):
-    # attendees est optionnel : sans effectif annoncé, rien à vérifier
-    if attendees is not None and attendees > room.capacity:
-        raise CapacityError(attendees, room)
-
-
-def check_slot(start, end):
-    if end <= start:
-        raise InvalidSlot("La fin doit être après le début")
-    if end - start > timedelta(hours=12):
-        raise InvalidSlot("Une réservation ne peut pas dépasser 12 heures")
+def conflict_error(other):
+    return ConflictError(
+        other,
+        f"Conflit avec #{other.id} "
+        f"({jour_fr(other.start)} {hhmm(other.start)}–{hhmm(other.end)}, {other.owner})",
+    )
 
 
 # ---------------------------------------------------------------- réservations
@@ -142,9 +112,9 @@ def book(room_id, day, start, end, owner, attendees=None):
     end_utc = to_utc(day, end)
     check_slot(start_utc, end_utc)
     check_capacity(attendees, room)
-    conflicts = find_conflicts(room.id, start_utc, end_utc)
-    if conflicts:
-        raise ConflictError(conflicts[0])
+    en_conflit = find_conflicts(room.id, start_utc, end_utc)
+    if en_conflit:
+        raise conflict_error(en_conflit[0])
     booking = Booking(
         id=uuid.uuid4().hex[:4],
         room_id=room.id,
@@ -186,9 +156,9 @@ def book_weekly(room_id, day, start, end, owner, weeks, attendees=None):
     check_capacity(attendees, room)
     bookings = []
     for slot_start, slot_end in weekly_slots(start_utc, end_utc, weeks):
-        conflicts = find_conflicts(room.id, slot_start, slot_end)
-        if conflicts:
-            raise ConflictError(conflicts[0])
+        en_conflit = find_conflicts(room.id, slot_start, slot_end)
+        if en_conflit:
+            raise conflict_error(en_conflit[0])
         bookings.append(
             Booking(
                 id=uuid.uuid4().hex[:4],
