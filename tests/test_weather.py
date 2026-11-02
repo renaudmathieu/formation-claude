@@ -1,3 +1,4 @@
+import json
 from datetime import date, timedelta
 
 import pytest
@@ -12,9 +13,21 @@ DAILY = {
 }
 
 
-@pytest.mark.skip(reason="TODO: la météo de demain ne correspond pas au site de référence")
 def test_pick_day_returns_the_requested_day():
     assert weather.pick_day(DAILY, date(2026, 11, 5))["temperature_max_c"] == 12
+
+
+def test_weather_tool_returns_json_for_the_requested_day(monkeypatch):
+    monkeypatch.setattr(weather, "fetch_daily", lambda city: DAILY)
+    monkeypatch.delenv("ESCALE_METEO", raising=False)
+    result = json.loads(weather.run_weather_tool({"city": "Lyon", "date": "2026-11-06"}))
+    assert result["date"] == "2026-11-06"
+    assert result["city"] == "Lyon"
+
+
+def test_weather_tool_rejects_an_invalid_date():
+    with pytest.raises(weather.WeatherError):
+        weather.run_weather_tool({"city": "Lyon", "date": "demain"})
 
 
 def test_pick_day_rejects_a_day_outside_the_forecast():

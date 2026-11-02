@@ -13,6 +13,8 @@
 - L'API ne garde aucun état : chaque appel renvoie tout l'historique.
 - On ajoute `response.content` entier à l'historique, blocs de thinking compris.
 - On lit `stop_reason` avant d'utiliser la réponse.
+- Claude ne connaît pas la date : elle est donnée dans le prompt système.
+- Tous les `tool_result` d'une réponse repartent dans un seul message utilisateur.
 
 ## Conventions
 - Les tests utilisent `tests/fakes.py` : jamais d'appel réseau ni de clé dans un test.
