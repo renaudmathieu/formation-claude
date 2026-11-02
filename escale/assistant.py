@@ -50,7 +50,7 @@ def show_progress(event: dict) -> None:
                 print(f"[réflexion] {block.thinking}")
         print(f"[tour {event['iteration']}] stop_reason={response.stop_reason}")
     elif event["type"] == "tool_call":
-        print(f"[tool] {event['name']} {_shorten(str(event['input']))}")
+        print(f"[tool:{event['source']}] {event['name']} {_shorten(str(event['input']))}")
     elif event["type"] == "tool_result" and event["is_error"]:
         print(f"[tool] {event['name']} a échoué")
 

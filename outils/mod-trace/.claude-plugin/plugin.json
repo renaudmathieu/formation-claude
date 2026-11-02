@@ -1,0 +1,7 @@
+{
+  "name": "trace",
+  "version": "0.1.0",
+  "description": "Panneau qui montre en direct ce que fait l'agent Escale : appels à l'API, stop_reason, tools et tokens",
+  "author": { "name": "Formation Maîtriser Claude Code" },
+  "types": "./types/index.d.ts"
+}

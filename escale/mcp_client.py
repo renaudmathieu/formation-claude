@@ -76,5 +76,5 @@ def load_mcp_tools(server) -> list[Tool]:
             "description": remote.description or remote.name,
             "input_schema": remote.input_schema,
         }
-        tools.append(Tool(definition=definition, handler=handler))
+        tools.append(Tool(definition=definition, handler=handler, source="mcp"))
     return tools

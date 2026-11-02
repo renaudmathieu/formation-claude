@@ -14,6 +14,7 @@ class Tool:
 
     definition: dict
     handler: Callable[[dict], str]
+    source: str = "local"
 
     @property
     def name(self) -> str:
@@ -35,6 +36,11 @@ class Toolbox:
     def definitions(self) -> list[dict]:
         """Return the definitions sent to the API, in a stable order."""
         return [tool.definition for tool in self.tools.values()]
+
+    def source_of(self, name: str) -> str:
+        """Tell where a tool comes from, for the trace."""
+        tool = self.tools.get(name)
+        return tool.source if tool else "inconnu"
 
     def run(self, name: str, tool_input: dict) -> tuple[str, bool]:
         """Run a tool and return `(content, is_error)`. A failing tool never stops the agent."""

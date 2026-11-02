@@ -1,5 +1,6 @@
 """The agent loop: call Claude, run the tools it asks for, and start again."""
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -28,7 +29,14 @@ def run_tool_calls(response, toolbox: Toolbox, on_event: Callable[[dict], None])
     for block in response.content:
         if block.type != "tool_use":
             continue
-        on_event({"type": "tool_call", "name": block.name, "input": block.input})
+        on_event(
+            {
+                "type": "tool_call",
+                "name": block.name,
+                "input": block.input,
+                "source": toolbox.source_of(block.name),
+            }
+        )
         content, is_error = toolbox.run(block.name, block.input)
         on_event({"type": "tool_result", "name": block.name, "is_error": is_error})
         result = {"type": "tool_result", "tool_use_id": block.id, "content": content}
@@ -54,10 +62,18 @@ def run_agent(
     """
     response = None
     for iteration in range(1, max_iterations + 1):
+        started_at = time.monotonic()
         response = send(
             client, messages, system=system, tools=toolbox.definitions(), effort=effort
         )
-        on_event({"type": "response", "iteration": iteration, "response": response})
+        on_event(
+            {
+                "type": "response",
+                "iteration": iteration,
+                "response": response,
+                "duration_ms": round((time.monotonic() - started_at) * 1000),
+            }
+        )
 
         if response.stop_reason == "refusal":
             return AgentResult(text_of(response), "refusal", iteration)

@@ -10,6 +10,7 @@ import anthropic
 from escale.agent import AgentResult, run_agent
 from escale.assistant import build_toolbox, show_progress, system_prompt
 from escale.toolbox import Toolbox
+from escale.trace import Tracer, fan_out
 
 SUPPORTED_IMAGES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
 HELP = "Commandes : /image <chemin> [question], /quitter"
@@ -59,6 +60,7 @@ class Conversation:
             content.append(image_block(image_path))
         content.append({"type": "text", "text": text})
         self.messages.append({"role": "user", "content": content})
+        self.on_event({"type": "user_message", "text": text})
 
         try:
             result = run_agent(
@@ -90,7 +92,7 @@ def parse_image_command(line: str) -> tuple[str, str]:
 
 def run_chat(client) -> None:
     """Run the conversation loop until the user leaves."""
-    conversation = Conversation(client, build_toolbox())
+    conversation = Conversation(client, build_toolbox(), on_event=fan_out(show_progress, Tracer()))
     print(f"Escale est prêt. {HELP}")
     while True:
         try:
@@ -122,11 +124,13 @@ def run_chat(client) -> None:
 
 def run_task(client, task: str) -> AgentResult:
     """Give the agent one task and let it work until it has finished."""
+    on_event = fan_out(show_progress, Tracer())
+    on_event({"type": "user_message", "text": task})
     return run_agent(
         client,
         [{"role": "user", "content": task}],
         build_toolbox(),
         system=system_prompt(date.today()),
         effort="high",
-        on_event=show_progress,
+        on_event=on_event,
     )
