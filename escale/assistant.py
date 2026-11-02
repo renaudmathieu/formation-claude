@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 
 from escale.mcp_client import McpUnavailableError, load_mcp_tools, mcp_url
+from escale.rag import rag_tool
 from escale.toolbox import Tool, Toolbox
 from escale.tools.files import file_tools
 from escale.tools.weather import weather_tool
@@ -20,7 +21,8 @@ def system_prompt(today: date) -> str:
         "Quand on te demande de préparer un déplacement, travaille en autonomie : rassemble les "
         "informations avec tes outils, puis livre une feuille de route en Markdown avec "
         "write_file. Si une information manque ou qu'un outil échoue, dis-le dans le document "
-        "au lieu de l'inventer."
+        "au lieu de l'inventer. Vérifie chaque choix (train, hôtel, repas) dans la politique de "
+        "voyage et cite la source des règles que tu appliques."
     )
 
 
@@ -38,7 +40,7 @@ def remote_tools() -> list[Tool]:
 
 def build_toolbox() -> Toolbox:
     """Gather the tools the agent can use, local and remote."""
-    return Toolbox([weather_tool(), *file_tools(OUTPUT_DIR), *remote_tools()])
+    return Toolbox([weather_tool(), rag_tool(), *file_tools(OUTPUT_DIR), *remote_tools()])
 
 
 def show_progress(event: dict) -> None:

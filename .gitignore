@@ -10,6 +10,7 @@ __pycache__/
 !.env.example
 # Generated at run time
 .escale/
+data/index.json
 sortie/*
 !sortie/.gitkeep
 # Types written by Claude Code when a mod loads

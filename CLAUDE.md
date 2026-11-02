@@ -12,6 +12,7 @@
 - `escale/tools/` contient les tools. Une panne se signale par `ToolError`. Pour en ajouter un : `/ajouter-tool`.
 - `escale/mcp_client.py` transforme les tools d'un serveur MCP en tools de l'agent.
 - `escale/transport_server.py` est le serveur MCP de démonstration, lancé à part.
+- `escale/rag.py` construit l'index (`uv run python -m escale.rag`) et fournit le tool de recherche.
 - `escale/trace.py` écrit `.escale/trace.jsonl`, que lit le mod `outils/mod-trace`. Le mod observe seulement.
 
 ## Règles de l'API (à vérifier, pas à deviner)
