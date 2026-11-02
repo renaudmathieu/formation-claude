@@ -3,12 +3,15 @@
 ## Commandes
 - Installer : `uv sync`. Tests : `uv run pytest -q`. Lint : `uv run ruff check .`
 - Lancer : `uv run python -m escale chat`, ou `agent "tâche"`, ou `ask "question"`
+- Serveur MCP : `uv run python -m escale.transport_server`
 
 ## Architecture
 - `escale/llm.py` est le seul fichier qui appelle la Messages API.
 - `escale/agent.py` contient la boucle, sans rien savoir du métier.
 - `escale/assistant.py` définit le prompt système et la liste des tools.
-- `escale/tools/` contient les tools. Une panne se signale par `ToolError`.
+- `escale/tools/` contient les tools. Une panne se signale par `ToolError`. Pour en ajouter un : `/ajouter-tool`.
+- `escale/mcp_client.py` transforme les tools d'un serveur MCP en tools de l'agent.
+- `escale/transport_server.py` est le serveur MCP de démonstration, lancé à part.
 
 ## Règles de l'API (à vérifier, pas à deviner)
 - L'API ne garde aucun état : chaque appel renvoie tout l'historique.
