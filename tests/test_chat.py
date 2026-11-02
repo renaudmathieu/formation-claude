@@ -3,7 +3,6 @@ import pytest
 from escale import chat
 from tests.fakes import FakeClient, response, text, thinking
 
-pytestmark = pytest.mark.skip(reason="TP 1 : retirer cette ligne pour commencer")
 
 def test_second_turn_sends_the_whole_history():
     client = FakeClient(response(text("Bonjour Camille")), response(text("Camille")))
