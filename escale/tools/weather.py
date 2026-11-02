@@ -6,12 +6,14 @@ from datetime import date, timedelta
 
 import httpx
 
+from escale.toolbox import Tool, ToolError
+
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 TIMEOUT_SECONDS = 10
 
 
-class WeatherError(Exception):
+class WeatherError(ToolError):
     """The forecast could not be obtained."""
 
 
@@ -108,3 +110,8 @@ def run_weather_tool(tool_input: dict) -> str:
     except ValueError as error:
         raise WeatherError(f"Date invalide : {tool_input['date']}") from error
     return json.dumps(get_forecast(tool_input["city"], target), ensure_ascii=False)
+
+
+def weather_tool() -> Tool:
+    """Build the weather tool."""
+    return Tool(definition=WEATHER_TOOL, handler=run_weather_tool)

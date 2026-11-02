@@ -12,3 +12,6 @@ __pycache__/
 .escale/
 sortie/*
 !sortie/.gitkeep
+# Local override of the Stop hook, never committed
+.claude/rouge-attendu
+.claude/settings.local.json

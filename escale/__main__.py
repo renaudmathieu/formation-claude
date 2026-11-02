@@ -7,7 +7,7 @@ import sys
 import anthropic
 from dotenv import load_dotenv
 
-from escale.chat import run_chat
+from escale.chat import describe, run_chat, run_task
 from escale.llm import send, text_of
 
 
@@ -18,6 +18,8 @@ def main() -> int:
     ask = commands.add_parser("ask", help="Poser une seule question")
     ask.add_argument("question")
     commands.add_parser("chat", help="Discuter tour à tour")
+    agent = commands.add_parser("agent", help="Confier une tâche à l'agent")
+    agent.add_argument("task")
     args = parser.parse_args()
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
@@ -30,6 +32,11 @@ def main() -> int:
             response = send(client, [{"role": "user", "content": args.question}])
             print(text_of(response))
             print(f"[stop_reason={response.stop_reason}]")
+        elif args.command == "agent":
+            result = run_task(client, args.task)
+            print(f"\n{describe(result)}")
+            print(f"[{result.iterations} tours, fin : {result.stop_reason}]")
+            return 0 if result.is_complete else 1
         else:
             run_chat(client)
     except anthropic.AuthenticationError:
