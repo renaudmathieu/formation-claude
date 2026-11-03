@@ -3,7 +3,7 @@
 # Usage: from a full clone, on the formateur branch: scripts/verifier-branches.sh
 set -u
 ATTENDU=(
-  "tp/0-depart|2 passed, 1 skipped"
+  "tp/0-depart|3 passed, 9 skipped"
   "tp/1-chat|11 passed, 1 skipped"
   "tp/2-tool|18 passed"
   "tp/3-agent|39 passed"

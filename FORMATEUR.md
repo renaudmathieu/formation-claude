@@ -8,8 +8,8 @@ Les supports (modules, guides formateur, kit J-7) sont dans Notion, page « Maî
 
 | Branche | TP et module | Ce qu'elle contient | Tests attendus |
 | --- | --- | --- | --- |
-| `main` = `tp/0-depart` | Départ, M3 | Dépendances, helper météo avec un bug planté, politique de voyage fictive, billet fictif | 2 passed, 1 skipped |
-| `tp/1-chat` | TP 1, M4 | Appel à la Messages API, image, conversation tour à tour, `CLAUDE.md` | 11 passed, 1 skipped |
+| `main` = `tp/0-depart` | Départ, M3 | Dépendances, helper météo avec un bug planté, politique de voyage fictive, billet fictif, appel à l'API (`llm.py`, `ask`), faux client, `chat.py` à trous et ses tests ignorés | 3 passed, 9 skipped |
+| `tp/1-chat` | TP 1, M4 | `chat.py` rempli (conversation tour à tour, image), tests activés, `CLAUDE.md` | 11 passed, 1 skipped |
 | `tp/2-tool` | TP 2, M5 à M7 | Tool `get_weather`, `stop_reason` affiché, un seul aller-retour, bug corrigé et test réactivé | 18 passed |
 | `tp/3-agent` | TP 3, M8 | Boucle d'agent, tools de fichiers limités à `sortie/`, `.claude/settings.json`, hook `Stop` | 39 passed |
 | `tp/4-mcp` | TP 4, M9 et M10 | Client et serveur MCP, skill `/ajouter-tool` | 46 passed |
