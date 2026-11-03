@@ -42,12 +42,16 @@ class Conversation:
         # Trou 2: when image_path is set, the image block goes here, before the text.
         content.append({"type": "text", "text": text})
 
-        # Trou 1.1: a message is a dict with a "role" and a "content".
-        self.messages.append(hole("trou 1.1 : ajouter le message utilisateur"))
+        # Trou 1.1: replace hole(...) with the variable built just above.
+        self.messages.append({"role": "user", "content": hole("trou 1.1 : le contenu de ce tour")})
 
         try:
-            # Trou 1.2: see the signature of send() in escale/llm.py.
-            response = send(hole("trou 1.2 : le client, tout l'historique, le prompt système"))
+            # Trou 1.2: the API does not remember anything, so send it everything.
+            response = send(
+                self.client,
+                hole("trou 1.2 : tout l'historique, pas seulement le dernier message"),
+                system=self.system,
+            )
         except (anthropic.APIError, KeyboardInterrupt):
             # Keep the history usable: the failed turn is not part of the conversation.
             self.messages.pop()
@@ -59,7 +63,12 @@ class Conversation:
             return REFUSAL_MESSAGE
 
         # Trou 1.3: the next call must see this answer, thinking blocks included.
-        self.messages.append(hole("trou 1.3 : ajouter la réponse complète de Claude"))
+        self.messages.append(
+            {
+                "role": "assistant",
+                "content": hole("trou 1.3 : tous les blocs de response, pas seulement le texte"),
+            }
+        )
 
         answer = text_of(response)
         if response.stop_reason == "max_tokens":
